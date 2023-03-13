@@ -1,0 +1,43 @@
+#!/bin/bash
+# ****************************************************************************
+# Resource name:  flyolympiadsbconvert.bash_tmpl
+# Written by:     Lowell Umayam
+# Revision level: 1.0
+# Date released:  2009-04-07
+# Description:    Script to converts Fly Olympiad avi to sbfmf
+# Required resources:
+#   Programs:     sbconvert
+#                 
+# Parameters:     $1: 
+# ****************************************************************************
+
+# # setup for lsf
+# . /misc/lsf/conf/profile.lsf
+
+# Need to find sbmoviesuite
+#tube_splitter_folder_path=${PWD}
+scripts_folder_path="$grammar{pipeline_scripts_path}"
+box_root_folder_path=$( dirname "${scripts_folder_path}" )
+sbmovie_suite_folder_path="${box_root_folder_path}/sbmoviesuite"
+sbconvert_script_path="${sbmovie_suite_folder_path}/sbconvert_cluster.pl"
+perl_interpreter_path="${box_root_folder_path}/local/python-2-env/bin/perl"
+printf "In avi_sbfmf_conversion.bash_tmpl, sbconvert_script_path is ${sbconvert_script_path}\n"
+
+# Move the sym. link along the pipeline.
+# In this case we need to copy the sym. link because we are running via the "bash" XML command
+# instead of the "grid" command.  If we move the sym. link then all subsequent "bash" attempts
+# will fail.  The fotrak step will remove the original sym. link once all sbconvert grid jobs
+# are done.
+if [ ! -d "$grammar{compressed_topdir_path}" ]
+then
+    cd "$grammar{base_dir}"
+    cp -d "$grammar{topdir}" "$grammar{compressed_path}" 2>/dev/null
+fi
+
+# Create the tube directory.
+mkdir -p "$grammar{compressed_sbfmf_path}"
+
+# Link and run sbconvert.
+cd "$grammar{compressed_sbfmf_path}"
+ln -s ../*$grammar{tube}.avi .
+"${perl_interpreter_path}" "${sbconvert_script_path}" -R -OR
